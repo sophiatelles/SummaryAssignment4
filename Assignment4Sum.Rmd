@@ -1,0 +1,387 @@
+---
+title: "Assignment 4"
+author: "Sophia Telles & Samantha Driscoll"
+date: "September 27, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Article 1: Data Science with R - http://garrettgman.github.io/tidying/ 
+R is a tool that can be used for everything from collecting data, to transforming it, to exploring it, and to running statistical tests. This article demonstrates ways in which we can best organize our data for R. In order to begin tidying the data, we must install the "tidyr" and "devtools" packages. 
+
+# 2.1 Tidy Data
+Data can be organized in many different ways. Data sets might display the same information, but one will be the easiest to work with. Three basic rules to follow in order to have the easiest data to work with include: 
+
+1. Each variable in the data set placed in its own column
+2. Each observation placed in its own row
+3. Each value placed in its own cell
+
+```{r}
+library(DSR)
+```
+## Data set one
+```{r}
+table1
+```
+Table1 from the DSR data set is tidy data because it follows these three rules. Data sets contain both values and relationships, and tidy data displays both consistently. Data structures in R are built from data frames and vectors, and tidy data takes advantage of these traits. Because tidy data will be assigned to its own vector in the data frame, values are easily extractable.
+## Data set two
+```{r}
+table2
+```
+## Data set three
+```{r}
+table3
+```
+## Data set four and five
+```{r}
+table4 # cases
+table5 # population
+```
+
+```{r}
+table1$cases
+```
+
+```{r}
+mean(table1$cases)
+```
+
+```{r}
+(table1$cases/table1$population) * 10000
+```
+# Data set one
+```{r}
+table1$cases / table1$population * 10000
+```
+# Data set two 
+```{r}
+case_rows <- c(1, 3, 5, 7, 9, 11, 13, 15, 17)
+pop_rows <-c(2, 4, 6, 8, 10, 12, 14, 16, 18)
+table2$value[case_rows] / table2$value[pop_rows] * 10000
+```
+R will return values as atomic vectors, which simply adds to the user experience. If data is tidy, element wise execution will ensure that observations are understood across operations and functions. The easier the data set to work with, the easier it will be to write the code and understand the data. In order to avoid extra steps, we must convert the data into a tidy format at the very beginning.
+
+# 2.2 Spread() and Gather()
+Two of the most important functions of the tidyr package are gather() and spread(), and each relies on key value pairs.
+A key value pair is a simplified way of recording information. A key explains what the information describes, and a value contains the information. In tidy data, each cell will contain a value and each column will contain a key. 
+## Data set Two Spread()
+Spread() turns a pair of key:value columns into a tidy set of columns. To use spread(), pass it in the name of the data frame, then they name of the name of the key column, and then the name of the value column. library(tidyr) spread(table2, key, value). Spread() maintains the relationships expressed in the original data, while allowing them to be tidy. Fill will place an NA in the cells that do not have data. Convert will change strings to doubles, integers, logicals, complexes, or factors. Drop controls how spread() handles factors in the key. 
+```{r}
+table2
+library(tidyr)
+spread(table2,type,count)
+```
+## Data set Four Gather()
+Gather() collects a set of column names and places them into a single key column. It will repeat former column names to maintain each combination of original values. Gather() uses the first string that was supplied as the name of the new "key" column, and it uses the second string as the names of the new value column. 
+```{r}
+table4
+gather(table4,"year", "cases", 2:3)
+```
+
+```{r}
+table4
+gather(table4,"year","population",2:3)
+```
+
+# 2.3 Separate() and Unite()
+Separate and gather help to reshape the layout of the data to place variables in columns and observations in rows.
+
+## Data set three separate()
+Separate() turns one character column into multiple columns by splitting the values of the column wherever a separator character appears. Separate() will return a copy of the data frame with the column removed. If we wish to use a specific character to separate a column, we can pass the character to the sep = "" argument. 
+```{r}
+separate(table3, rate, into = c("cases", "population"))
+```
+
+## Data set three sep command
+```{r}
+separate(table3, year, into = c("century", "year"), sep = 2)
+```
+
+## Data set six unite()
+Unite() combines multiple columns into a single column. Unite() will place an underscore between values from separate columns. 
+```{r}
+table6
+unite(table6, "new", century, year, sep = "")
+```
+
+# Article 2: Tidy Data http://r4ds.had.co.nz/tidy-data.html
+## Introduction
+Tidy data will pay off in the long run. Working with the tidyverse package, will allow us to spend more time on the analytic questions and not fixing the data. 
+## 12.1 Prerequisites
+```{r}
+library(tidyverse)
+```
+##12.2 Tidy Data
+Below are all representations of the same underlying data, but they are not easy to use. A tidy data set will be easier to work with. 
+```{r}
+table1
+```
+```{r}
+table2
+```
+```{r}
+table3
+```
+```{r}
+table4a
+```
+```{r}
+table4b
+```
+
+A tidy data set must include these rules:
+1. Each variable must have its own column.
+2. Each observation must have its own row.
+3. Each value must have its own cell.
+
+The advantages of tidying data include: a consistent data structure that is easier to work with and placing variables in columns allows for R's vectorised nature to shine. 
+
+## Compute rate per 10,000
+```{r}
+table1 %>%
+mutate(rate = cases / population * 10000)
+```
+
+## Compute cases per year
+```{r}
+table1 %>%
+  count(year, wt = cases)
+```
+## Visualize changes over time
+```{r}
+library(ggplot2)
+ggplot(table1, aes(year,cases)) + geom_line(aes(group = country), colour = "grey50") + geom_point(aes(colour = country))
+```
+
+## 12.3 Spreading and Gathering
+Most data will be untidy. This is mainly due to the fact that most people are not familiar with tidy data and data is often organized to facitiate some different use.
+
+## Gathering
+We will get new key and value columns. 
+```{r}
+table4a %>%
+gather('1999', '2000', key = "year", value = "cases")
+```
+```{r}
+table4b %>%
+  gather('1999', '2000', key = "year", value = "population")
+```
+To join these thwo tables into a single table, we need to use the dplyr::left_join(). Unfortunately, I am getting a lot of errors in my data, so the below function is not displaying a joined table. 
+```{r}
+tidy4a <- table4a %>% 
+  gather(`1999`, `2000`, key = "year", value = "cases")
+tidy4b <- table4b %>% 
+  gather(`1999`, `2000`, key = "year", value = "population")
+left_join(tidy4a, tidy4b)
+```
+## Spreading
+Spreading is the opposite of gathering. It should be used when an observation is scattered across multiple rows. 
+```{r}
+table2
+spread(table2, key = type, value = count)
+```
+Spread() and Gather() are complements. Gather() makes wide tables narrower and longer, and spread() makes long tables shorter and wider. 
+
+# 12.4 Separating and uniting 
+Separate() pulls apart one column into multiple columns. It will split values by non-alphanumberic characters. 
+```{r}
+table3 %>%
+  separate(rate, into = c("cases", "population"))
+```
+```{r}
+table3 %>%
+  separate(rate, into = c("cases", "population"), convert = TRUE)
+```
+
+```{r}
+table3 %>% 
+  separate(year, into = c("century", "year"), sep = 2)
+```
+
+Unite() combines multiple columns into a single column. 
+```{r}
+table5 %>% 
+  unite(new, century, year)
+```
+
+Be sure to look to the R 4 Data Science documents to refresh. 
+
+# Article 3:
+We are using nycflights13 package
+
+```{r}
+library(nycflights13)
+library(tidyverse)
+```
+
+We're specifically focusing on flights out of NYC in 2013, and can view that data set through this function
+
+```{r}
+nycflights13::flights
+```
+
+The types of variables are described using the following vocab:
+*int=integers
+*dbl=real numbers
+*chr=character vectors
+*dttm=date and time 
+
+Three other types of variables are lgl (logical), fctr (factors), and dates, but those are not used here.
+
+The 5 key dplyr functions are 
+*Picking observations (filter())
+*reorder the rows (arrange())
+*pick variables by name (select())
+*create new variables (mutate())
+*colapse many values into single summary (summarise())
+
+These can be used along with group_by(), which changes the cope of each function so that it operates group-by-group
+
+## Filter 
+
+```{r}
+filter(flights, month == 1, day == 1)
+```
+Now we can see departure times for only janurary 1st 
+
+comparing 2 months
+```{r}
+filter(flights, month==11 | month==12)
+```
+
+If you want to find flughts that werent delaneys by more than two hours, use this:
+
+```{r}
+filter(flights, !(arr_delay > 120 | dep_delay > 120))
+```
+
+## Missing values 
+
+if you have a missing value: x<-NA
+if you later find the value is.na(x)
+
+## Arrange
+selecting rows 
+```{r}
+arrange(flights, year, month, day)
+```
+
+to order by column in descending order:
+```{r}
+arrange(flights, desc(arr_delay))
+```
+
+## Select
+Best if you have a lot of data 
+
+```{r}
+select(flights, year, month, day)
+```
+
+selecting all columns between year and day
+```{r}
+select(flights, year:day)
+```
+
+or all columns except year and day 
+```{r}
+select(flights, -(year:day))
+```
+
+you can also use starts_with("letter"")
+
+## Mutate()
+adds new columns 
+
+```{r}
+flights_sml <- select(flights, 
+  year:day, 
+  ends_with("delay"), 
+  distance, 
+  air_time
+)
+mutate(flights_sml,
+  gain = arr_delay - dep_delay,
+  speed = distance / air_time * 60
+)
+```
+
+## Summarise()
+
+to view a single row
+```{r}
+summarise(flights, delay = mean(dep_delay, na.rm = TRUE))
+```
+
+## Count()
+
+can count amounts of data points in certain categories 
+
+```{r}
+count(flights, delay=2)
+```
+
+
+# Article 4
+
+## Loadpackages
+```{r}
+suppressMessages(library(dplyr))
+library(nycflights13)
+```
+
+## Choosing columns (select, rename)
+to show columns for carriers and flight numbers:
+```{r}
+flights %>% select (carrier, flight) 
+```
+
+to show columns for all columns except month and day :
+```{r}
+flights %>% select(-month, -day)
+```
+
+hide a range of columns 
+
+```{r}
+flights %>% select(-(dep_time:arr_delay))
+```
+
+rename tail to tailnum using select
+```{r}
+flights %>% select(tail = tailnum)
+```
+
+Filtering by departure time range
+```{r}
+flights %>% filter(dep_time >= 600, dep_time <= 605)
+```
+
+adding new variables using math formulas: 
+```{r}
+flights %>% mutate(speed = distance/air_time*60)
+
+```
+
+now we have speed from our existing data for distance and air_time while keeping all other variables. To keep only the new variable, instead of "mutate" use "transmute"
+
+create 2 data frames with color
+
+```{r}
+(a <- data_frame(color = c("green","yellow","red"), num = 1:3))
+```
+
+if you want to see 15 rows
+
+```{r}
+flights %>% print(n = 15)
+```
+
+all columns and fewer rows
+
+```{r}
+options(dplyr.width = Inf, dplyr.print_min = 6)
+```
+
